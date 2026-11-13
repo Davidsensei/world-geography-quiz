@@ -282,58 +282,31 @@ function chooseQuestions(pool) {
 }
 
 function makeAnswers(country) {
-  const difficulty = document.getElementById("difficulty").value;
+  function makeAnswers(country) {
+  const answers = [country.capital];
 
-  const localCities = shuffle(country.cities);
-  const otherCountries = countries.filter(
-    c => c.name !== country.name
+  // Collect cities from the correct country.
+  const sameCountryCities = country.cities.filter(
+    city => city !== country.capital
   );
 
-  let foreignCountries = otherCountries;
+  // Collect capitals from other countries.
+  const otherCapitals = countries
+    .filter(c => c.name !== country.name)
+    .map(c => c.capital);
 
-  // For hard questions, prefer capitals from the same continent.
-  if (difficulty === "hard") {
-    const sameContinent = otherCountries.filter(
-      c => c.continent === country.continent
-    );
+  // Randomly choose three wrong answers.
+  const distractors = [...sameCountryCities, ...otherCapitals];
 
-    if (sameContinent.length >= 3) {
-      foreignCountries = sameContinent;
+  shuffle(distractors);
+
+  for (const answer of distractors) {
+    if (!answers.includes(answer) && answers.length < 4) {
+      answers.push(answer);
     }
   }
 
-  const foreignCapitals = shuffle(foreignCountries).map(c => c.capital);
-
-  let distractors = [];
-
-  if (difficulty === "easy") {
-    distractors = [
-      ...localCities.slice(0, 2),
-      ...foreignCapitals.slice(0, 1)
-    ];
-  } else if (difficulty === "medium") {
-    distractors = [
-      ...localCities.slice(0, 1),
-      ...foreignCapitals.slice(0, 2)
-    ];
-  } else {
-    distractors = foreignCapitals.slice(0, 3);
-  }
-
-  // Make sure there are four different answers.
-  const allOptions = shuffle([
-    country.capital,
-    ...distractors,
-    ...localCities,
-    ...shuffle(otherCountries).map(c => c.capital)
-  ]);
-
-  const uniqueOptions = [...new Set(allOptions)];
-
-  return shuffle([
-    country.capital,
-    ...uniqueOptions.filter(option => option !== country.capital).slice(0, 3)
-  ]);
+  return shuffle(answers);
 }
 
 function startQuiz() {
