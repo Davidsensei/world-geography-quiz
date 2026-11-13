@@ -173,26 +173,26 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 
 <script>
 const countries = [
-  {name:"Japan", capital:"Tokyo", continent:"Asia"},
-  {name:"Australia", capital:"Canberra", continent:"Oceania"},
-  {name:"France", capital:"Paris", continent:"Europe"},
-  {name:"Germany", capital:"Berlin", continent:"Europe"},
-  {name:"Italy", capital:"Rome", continent:"Europe"},
-  {name:"Spain", capital:"Madrid", continent:"Europe"},
-  {name:"United Kingdom", capital:"London", continent:"Europe"},
-  {name:"Canada", capital:"Ottawa", continent:"North America"},
-  {name:"United States", capital:"Washington, D.C.", continent:"North America"},
-  {name:"Mexico", capital:"Mexico City", continent:"North America"},
-  {name:"Brazil", capital:"Brasília", continent:"South America"},
-  {name:"Argentina", capital:"Buenos Aires", continent:"South America"},
-  {name:"Egypt", capital:"Cairo", continent:"Africa"},
-  {name:"South Africa", capital:"Pretoria", continent:"Africa"},
-  {name:"Kenya", capital:"Nairobi", continent:"Africa"},
-  {name:"China", capital:"Beijing", continent:"Asia"},
-  {name:"India", capital:"New Delhi", continent:"Asia"},
-  {name:"South Korea", capital:"Seoul", continent:"Asia"},
-  {name:"Thailand", capital:"Bangkok", continent:"Asia"},
-  {name:"New Zealand", capital:"Wellington", continent:"Oceania"}
+  {name:"Japan",capital:"Tokyo",continent:"Asia",cities:["Osaka","Kyoto","Yokohama","Sapporo"]},
+  {name:"Australia",capital:"Canberra",continent:"Oceania",cities:["Sydney","Melbourne","Brisbane","Perth"]},
+  {name:"France",capital:"Paris",continent:"Europe",cities:["Lyon","Marseille","Nice","Bordeaux"]},
+  {name:"Germany",capital:"Berlin",continent:"Europe",cities:["Munich","Hamburg","Frankfurt","Cologne"]},
+  {name:"Italy",capital:"Rome",continent:"Europe",cities:["Milan","Venice","Florence","Naples"]},
+  {name:"Spain",capital:"Madrid",continent:"Europe",cities:["Barcelona","Seville","Valencia","Malaga"]},
+  {name:"United Kingdom",capital:"London",continent:"Europe",cities:["Manchester","Liverpool","Birmingham","Edinburgh"]},
+  {name:"Canada",capital:"Ottawa",continent:"North America",cities:["Toronto","Vancouver","Montreal","Calgary"]},
+  {name:"United States",capital:"Washington, D.C.",continent:"North America",cities:["New York","Los Angeles","Chicago","Miami"]},
+  {name:"Mexico",capital:"Mexico City",continent:"North America",cities:["Guadalajara","Monterrey","Cancun","Puebla"]},
+  {name:"Brazil",capital:"Brasília",continent:"South America",cities:["Rio de Janeiro","Sao Paulo","Salvador","Manaus"]},
+  {name:"Argentina",capital:"Buenos Aires",continent:"South America",cities:["Cordoba","Rosario","Mendoza","La Plata"]},
+  {name:"Egypt",capital:"Cairo",continent:"Africa",cities:["Alexandria","Giza","Luxor","Aswan"]},
+  {name:"South Africa",capital:"Pretoria",continent:"Africa",cities:["Cape Town","Johannesburg","Durban","Bloemfontein"]},
+  {name:"Kenya",capital:"Nairobi",continent:"Africa",cities:["Mombasa","Kisumu","Nakuru","Eldoret"]},
+  {name:"China",capital:"Beijing",continent:"Asia",cities:["Shanghai","Guangzhou","Shenzhen","Chengdu"]},
+  {name:"India",capital:"New Delhi",continent:"Asia",cities:["Mumbai","Bengaluru","Kolkata","Chennai"]},
+  {name:"South Korea",capital:"Seoul",continent:"Asia",cities:["Busan","Incheon","Daegu","Daejeon"]},
+  {name:"Thailand",capital:"Bangkok",continent:"Asia",cities:["Chiang Mai","Phuket","Pattaya","Hat Yai"]},
+  {name:"New Zealand",capital:"Wellington",continent:"Oceania",cities:["Auckland","Christchurch","Hamilton","Dunedin"]}
 ];
 
 const SESSION_LENGTH = 20;
@@ -201,7 +201,7 @@ let current = 0;
 let score = 0;
 let firstTryCorrect = 0;
 let firstTryCount = 0;
-let answered = false;
+let firstAttempt = true;
 let soundOn = true;
 let practice = [];
 
@@ -230,11 +230,26 @@ function chooseQuestions() {
   });
 
   const selected = [];
-  while (selected.length < SESSION_LENGTH) {
+  while (selected.length < Math.min(SESSION_LENGTH, countries.length)) {
     const candidate = weighted[Math.floor(Math.random() * weighted.length)];
     if (!selected.includes(candidate)) selected.push(candidate);
   }
   return selected;
+}
+
+function makeAnswers(country) {
+  const otherCapitals = countries
+    .filter(c => c.name !== country.name)
+    .map(c => c.capital);
+
+  const localCities = shuffle(country.cities).slice(0, 2);
+  const foreignCapital = shuffle(otherCapitals)[0];
+
+  return shuffle([
+    country.capital,
+    ...localCities,
+    foreignCapital
+  ]);
 }
 
 function startQuiz() {
@@ -251,16 +266,18 @@ function startQuiz() {
 }
 
 function showQuestion() {
-  answered = false;
+  firstAttempt = true;
   const country = questions[current];
 
   document.getElementById("questionNumber").textContent =
-    `${current + 1}/${SESSION_LENGTH}`;
+    `${current + 1}/${questions.length}`;
   document.getElementById("score").textContent = score;
   document.getElementById("accuracy").textContent =
-    firstTryCount ? Math.round(firstTryCorrect / firstTryCount * 100) + "%" : "—";
+    firstTryCount
+      ? Math.round(firstTryCorrect / firstTryCount * 100) + "%"
+      : "—";
   document.getElementById("progressBar").style.width =
-    (current / SESSION_LENGTH * 100) + "%";
+    (current / questions.length * 100) + "%";
 
   document.getElementById("question").textContent =
     `What is the capital of ${country.name}?`;
@@ -268,15 +285,10 @@ function showQuestion() {
   document.getElementById("feedback").textContent = "";
   document.getElementById("nextButton").style.display = "none";
 
-  const wrongAnswers = shuffle(
-    countries.filter(c => c.name !== country.name)
-  ).slice(0, 3).map(c => c.capital);
-
-  const options = shuffle([country.capital, ...wrongAnswers]);
   const answerArea = document.getElementById("answers");
   answerArea.innerHTML = "";
 
-  options.forEach(option => {
+  makeAnswers(country).forEach(option => {
     const button = document.createElement("button");
     button.className = "answer";
     button.textContent = option;
@@ -288,19 +300,15 @@ function showQuestion() {
 }
 
 function checkAnswer(button, answer, country) {
-  if (answered) return;
-
+  if (button.disabled) return;
   const feedback = document.getElementById("feedback");
 
   if (answer === country.capital) {
-    answered = true;
     score++;
-    if (!practice.includes(country.name)) {
-      // A country is only counted once in the practice list.
-    }
 
-    if (!practice.includes(country.name)) {
-      practice.push(country.name);
+    if (firstAttempt) {
+      firstTryCorrect++;
+      firstTryCount++;
     }
 
     const oldLevel = progress[country.name] || 0;
@@ -314,32 +322,32 @@ function checkAnswer(button, answer, country) {
     feedback.style.color = "#15803d";
     speak(`${country.name}. The capital is ${country.capital}.`);
 
-    if (firstTryCount < SESSION_LENGTH) {
-      // First-attempt accuracy is recorded separately below.
-    }
-
     document.getElementById("score").textContent = score;
     document.getElementById("accuracy").textContent =
-      firstTryCount ? Math.round(firstTryCorrect / firstTryCount * 100) + "%" : "—";
+      Math.round(firstTryCorrect / firstTryCount * 100) + "%";
 
     document.getElementById("nextButton").style.display = "inline-block";
+
   } else {
-    if (!practice.includes(country.name)) {
-      practice.push(country.name);
+    if (firstAttempt) {
+      firstTryCount++;
+      firstAttempt = false;
+      if (!practice.includes(country.name)) {
+        practice.push(country.name);
+      }
     }
 
     button.classList.add("wrong");
     button.disabled = true;
     feedback.textContent = "✗ Not quite! Try again.";
     feedback.style.color = "#dc2626";
-
-    if (soundOn) speak("Try again.");
+    speak("Try again.");
   }
 }
 
 document.getElementById("nextButton").onclick = () => {
   current++;
-  if (current >= SESSION_LENGTH) {
+  if (current >= questions.length) {
     finishQuiz();
   } else {
     showQuestion();
@@ -349,12 +357,21 @@ document.getElementById("nextButton").onclick = () => {
 function finishQuiz() {
   document.getElementById("quizPanel").style.display = "none";
   document.getElementById("summary").style.display = "block";
+
   document.getElementById("finalScore").textContent =
-    `You got ${score} out of ${SESSION_LENGTH} questions correct.`;
+    `You got ${score} out of ${questions.length} questions correct.`;
+
   document.getElementById("finalAccuracy").textContent =
-    "Keep practising to improve your knowledge!";
+    `First-attempt accuracy: ${
+      firstTryCount
+        ? Math.round(firstTryCorrect / firstTryCount * 100)
+        : 0
+    }%`;
+
   document.getElementById("practiceList").textContent =
-    practice.length ? practice.join(", ") : "Great work — no difficult questions!";
+    practice.length
+      ? practice.join(", ")
+      : "Excellent work — all correct on the first attempt!";
 }
 
 document.getElementById("speakButton").onclick = () => {
@@ -365,7 +382,10 @@ document.getElementById("soundButton").onclick = () => {
   soundOn = !soundOn;
   document.getElementById("soundButton").textContent =
     soundOn ? "🔈 Sound: On" : "🔇 Sound: Off";
-  if (!soundOn && "speechSynthesis" in window) speechSynthesis.cancel();
+
+  if (!soundOn && "speechSynthesis" in window) {
+    speechSynthesis.cancel();
+  }
 };
 
 startQuiz();
