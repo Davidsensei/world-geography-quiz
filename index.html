@@ -144,7 +144,29 @@ button:disabled { opacity: .5; cursor: not-allowed; }
     </div>
 
     <div class="progress"><div id="progressBar"></div></div>
+<div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:20px;">
+  <label style="flex:1; min-width:130px;">
+    Difficulty
+    <select id="difficulty" style="width:100%; padding:10px; margin-top:6px; border-radius:8px;">
+      <option value="easy">Easy</option>
+      <option value="medium" selected>Medium</option>
+      <option value="hard">Hard</option>
+    </select>
+  </label>
 
+  <label style="flex:1; min-width:130px;">
+    Continent
+    <select id="continent" style="width:100%; padding:10px; margin-top:6px; border-radius:8px;">
+      <option value="All">All World</option>
+      <option value="Africa">Africa</option>
+      <option value="Asia">Asia</option>
+      <option value="Europe">Europe</option>
+      <option value="North America">North America</option>
+      <option value="South America">South America</option>
+      <option value="Oceania">Oceania</option>
+    </select>
+  </label>
+</div>
     <p class="question-label">CAPITAL CITIES</p>
     <h2 id="question">What is the capital of Japan?</h2>
 
