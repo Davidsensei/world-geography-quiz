@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>World Geography Quiz</title>
+<style>
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #eef3f8;
+  color: #1e293b;
+}
+header {
+  background: #17365d;
+  color: white;
+  text-align: center;
+  padding: 25px 15px;
+}
+header h1 { margin: 0 0 8px; }
+header p { margin: 0; color: #dbeafe; }
+main {
+  max-width: 650px;
+  margin: 30px auto;
+  padding: 20px;
+}
+.panel {
+  background: white;
+  border-radius: 16px;
+  padding: 25px;
+  box-shadow: 0 4px 18px #00000012;
+}
+.stats {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+.stat {
+  background: #eef3f8;
+  border-radius: 10px;
+  padding: 12px;
+  flex: 1;
+}
+.stat strong { display: block; font-size: 23px; }
+.stat span { font-size: 12px; color: #64748b; }
+.progress {
+  height: 9px;
+  background: #e2e8f0;
+  border-radius: 20px;
+  overflow: hidden;
+  margin-bottom: 25px;
+}
+#progressBar {
+  height: 100%;
+  width: 0;
+  background: #16a34a;
+  transition: width .2s;
+}
+.question-label {
+  color: #64748b;
+  font-size: 14px;
+  text-align: center;
+}
+h2 { text-align: center; font-size: 27px; }
+#question { margin: 15px 0 25px; }
+.answers {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+button {
+  cursor: pointer;
+  border: 0;
+  border-radius: 10px;
+  padding: 15px;
+  font-size: 16px;
+  font-weight: bold;
+}
+.answer {
+  background: #e8eef6;
+  color: #17365d;
+  border: 2px solid transparent;
+}
+.answer:hover:not(:disabled) {
+  border-color: #3975b9;
+  background: #dceafe;
+}
+.answer:disabled { cursor: default; opacity: 1; }
+.answer.correct { background: #dcfce7; border-color: #16a34a; color: #166534; }
+.answer.wrong { background: #fee2e2; border-color: #dc2626; color: #991b1b; }
+#feedback {
+  min-height: 30px;
+  text-align: center;
+  font-weight: bold;
+  margin: 20px 0 5px;
+}
+.controls {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 15px;
+}
+.primary { background: #17365d; color: white; }
+.secondary { background: #e2e8f0; color: #334155; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+#nextButton { display: none; }
+#summary { display: none; text-align: center; }
+#summary h2 { color: #17365d; }
+.small { font-size: 13px; color: #64748b; text-align: center; }
+@media(max-width: 480px) {
+  main { padding: 12px; margin: 15px auto; }
+  .panel { padding: 18px; }
+  .answers { grid-template-columns: 1fr; }
+  h2 { font-size: 23px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🌍 World Geography Quiz</h1>
+  <p>Explore the world, one country at a time!</p>
+</header>
+
+<main>
+  <div class="panel" id="quizPanel">
+    <div class="stats">
+      <div class="stat">
+        <strong id="questionNumber">1/20</strong>
+        <span>QUESTION</span>
+      </div>
+      <div class="stat">
+        <strong id="score">0</strong>
+        <span>SCORE</span>
+      </div>
+      <div class="stat">
+        <strong id="accuracy">—</strong>
+        <span>FIRST TRY</span>
+      </div>
+    </div>
+
+    <div class="progress"><div id="progressBar"></div></div>
+
+    <p class="question-label">CAPITAL CITIES</p>
+    <h2 id="question">What is the capital of Japan?</h2>
+
+    <div class="answers" id="answers"></div>
+
+    <div id="feedback"></div>
+
+    <div class="controls">
+      <button class="secondary" id="speakButton">🔊 Hear question</button>
+      <button class="secondary" id="soundButton">🔈 Sound: On</button>
+      <button class="primary" id="nextButton">Next question →</button>
+    </div>
+  </div>
+
+  <div class="panel" id="summary">
+    <h2>🎉 Session complete!</h2>
+    <p id="finalScore"></p>
+    <p id="finalAccuracy"></p>
+    <h3>Countries to practise</h3>
+    <p id="practiceList"></p>
+    <button class="primary" onclick="startQuiz()">Play again</button>
+  </div>
+
+  <p class="small">Your progress is saved on this device.</p>
+</main>
+
+<script>
+const countries = [
+  {name:"Japan", capital:"Tokyo", continent:"Asia"},
+  {name:"Australia", capital:"Canberra", continent:"Oceania"},
+  {name:"France", capital:"Paris", continent:"Europe"},
+  {name:"Germany", capital:"Berlin", continent:"Europe"},
+  {name:"Italy", capital:"Rome", continent:"Europe"},
+  {name:"Spain", capital:"Madrid", continent:"Europe"},
+  {name:"United Kingdom", capital:"London", continent:"Europe"},
+  {name:"Canada", capital:"Ottawa", continent:"North America"},
+  {name:"United States", capital:"Washington, D.C.", continent:"North America"},
+  {name:"Mexico", capital:"Mexico City", continent:"North America"},
+  {name:"Brazil", capital:"Brasília", continent:"South America"},
+  {name:"Argentina", capital:"Buenos Aires", continent:"South America"},
+  {name:"Egypt", capital:"Cairo", continent:"Africa"},
+  {name:"South Africa", capital:"Pretoria", continent:"Africa"},
+  {name:"Kenya", capital:"Nairobi", continent:"Africa"},
+  {name:"China", capital:"Beijing", continent:"Asia"},
+  {name:"India", capital:"New Delhi", continent:"Asia"},
+  {name:"South Korea", capital:"Seoul", continent:"Asia"},
+  {name:"Thailand", capital:"Bangkok", continent:"Asia"},
+  {name:"New Zealand", capital:"Wellington", continent:"Oceania"}
+];
+
+const SESSION_LENGTH = 20;
+let questions = [];
+let current = 0;
+let score = 0;
+let firstTryCorrect = 0;
+let firstTryCount = 0;
+let answered = false;
+let soundOn = true;
+let practice = [];
+
+let progress = JSON.parse(localStorage.getItem("geoProgress") || "{}");
+
+function speak(text) {
+  if (!soundOn || !("speechSynthesis" in window)) return;
+  speechSynthesis.cancel();
+  const message = new SpeechSynthesisUtterance(text);
+  message.lang = "en-US";
+  message.rate = 0.9;
+  speechSynthesis.speak(message);
+}
+
+function shuffle(array) {
+  return [...array].sort(() => Math.random() - 0.5);
+}
+
+function chooseQuestions() {
+  const weighted = [];
+
+  countries.forEach(country => {
+    const level = progress[country.name] || 0;
+    const weight = level >= 3 ? 1 : level === 2 ? 2 : 4;
+    for (let i = 0; i < weight; i++) weighted.push(country);
+  });
+
+  const selected = [];
+  while (selected.length < SESSION_LENGTH) {
+    const candidate = weighted[Math.floor(Math.random() * weighted.length)];
+    if (!selected.includes(candidate)) selected.push(candidate);
+  }
+  return selected;
+}
+
+function startQuiz() {
+  questions = chooseQuestions();
+  current = 0;
+  score = 0;
+  firstTryCorrect = 0;
+  firstTryCount = 0;
+  practice = [];
+
+  document.getElementById("quizPanel").style.display = "block";
+  document.getElementById("summary").style.display = "none";
+  showQuestion();
+}
+
+function showQuestion() {
+  answered = false;
+  const country = questions[current];
+
+  document.getElementById("questionNumber").textContent =
+    `${current + 1}/${SESSION_LENGTH}`;
+  document.getElementById("score").textContent = score;
+  document.getElementById("accuracy").textContent =
+    firstTryCount ? Math.round(firstTryCorrect / firstTryCount * 100) + "%" : "—";
+  document.getElementById("progressBar").style.width =
+    (current / SESSION_LENGTH * 100) + "%";
+
+  document.getElementById("question").textContent =
+    `What is the capital of ${country.name}?`;
+
+  document.getElementById("feedback").textContent = "";
+  document.getElementById("nextButton").style.display = "none";
+
+  const wrongAnswers = shuffle(
+    countries.filter(c => c.name !== country.name)
+  ).slice(0, 3).map(c => c.capital);
+
+  const options = shuffle([country.capital, ...wrongAnswers]);
+  const answerArea = document.getElementById("answers");
+  answerArea.innerHTML = "";
+
+  options.forEach(option => {
+    const button = document.createElement("button");
+    button.className = "answer";
+    button.textContent = option;
+    button.onclick = () => checkAnswer(button, option, country);
+    answerArea.appendChild(button);
+  });
+
+  speak(`What is the capital of ${country.name}?`);
+}
+
+function checkAnswer(button, answer, country) {
+  if (answered) return;
+
+  const feedback = document.getElementById("feedback");
+
+  if (answer === country.capital) {
+    answered = true;
+    score++;
+    if (!practice.includes(country.name)) {
+      // A country is only counted once in the practice list.
+    }
+
+    if (!practice.includes(country.name)) {
+      practice.push(country.name);
+    }
+
+    const oldLevel = progress[country.name] || 0;
+    progress[country.name] = Math.min(3, oldLevel + 1);
+    localStorage.setItem("geoProgress", JSON.stringify(progress));
+
+    button.classList.add("correct");
+    document.querySelectorAll(".answer").forEach(b => b.disabled = true);
+
+    feedback.textContent = "✓ Correct! " + country.capital;
+    feedback.style.color = "#15803d";
+    speak(`${country.name}. The capital is ${country.capital}.`);
+
+    if (firstTryCount < SESSION_LENGTH) {
+      // First-attempt accuracy is recorded separately below.
+    }
+
+    document.getElementById("score").textContent = score;
+    document.getElementById("accuracy").textContent =
+      firstTryCount ? Math.round(firstTryCorrect / firstTryCount * 100) + "%" : "—";
+
+    document.getElementById("nextButton").style.display = "inline-block";
+  } else {
+    if (!practice.includes(country.name)) {
+      practice.push(country.name);
+    }
+
+    button.classList.add("wrong");
+    button.disabled = true;
+    feedback.textContent = "✗ Not quite! Try again.";
+    feedback.style.color = "#dc2626";
+
+    if (soundOn) speak("Try again.");
+  }
+}
+
+document.getElementById("nextButton").onclick = () => {
+  current++;
+  if (current >= SESSION_LENGTH) {
+    finishQuiz();
+  } else {
+    showQuestion();
+  }
+};
+
+function finishQuiz() {
+  document.getElementById("quizPanel").style.display = "none";
+  document.getElementById("summary").style.display = "block";
+  document.getElementById("finalScore").textContent =
+    `You got ${score} out of ${SESSION_LENGTH} questions correct.`;
+  document.getElementById("finalAccuracy").textContent =
+    "Keep practising to improve your knowledge!";
+  document.getElementById("practiceList").textContent =
+    practice.length ? practice.join(", ") : "Great work — no difficult questions!";
+}
+
+document.getElementById("speakButton").onclick = () => {
+  speak(`What is the capital of ${questions[current].name}?`);
+};
+
+document.getElementById("soundButton").onclick = () => {
+  soundOn = !soundOn;
+  document.getElementById("soundButton").textContent =
+    soundOn ? "🔈 Sound: On" : "🔇 Sound: Off";
+  if (!soundOn && "speechSynthesis" in window) speechSynthesis.cancel();
+};
+
+startQuiz();
+</script>
+</body>
+</html>
