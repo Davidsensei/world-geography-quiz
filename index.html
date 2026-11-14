@@ -418,13 +418,26 @@ let progress = JSON.parse(localStorage.getItem("geoProgress") || "{}");
 
 function speak(text) {
   if (!soundOn || !("speechSynthesis" in window)) return;
+
   speechSynthesis.cancel();
+
   const message = new SpeechSynthesisUtterance(text);
-  message.lang = "en-US";
+  const voices = speechSynthesis.getVoices();
+
+  const britishFemale = voices.find(voice =>
+    voice.lang === "en-GB" &&
+    /female|serena|kate|susan|libby/i.test(voice.name)
+  );
+
+  message.voice = britishFemale ||
+    voices.find(voice => voice.lang === "en-GB") ||
+    null;
+
+  message.lang = "en-GB";
   message.rate = 0.9;
+
   speechSynthesis.speak(message);
 }
-
 function shuffle(array) {
   const result = [...array];
 
