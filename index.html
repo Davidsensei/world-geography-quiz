@@ -243,31 +243,48 @@ function shuffle(array) {
 
 function chooseQuestions(pool) {
   const selected = [];
+  const remaining = [...pool];
 
-  for (let i = 0; i < SESSION_LENGTH; i++) {
-    let choices = pool;
-
-    // Avoid repeating the previous country when possible.
-    if (selected.length > 0 && pool.length > 1) {
-      choices = pool.filter(
-        country => country.name !== selected[selected.length - 1].name
-      );
-    }
-
-    // Countries we know less well receive more chances.
+  // First, use every available country once, without repeats.
+  while (remaining.length > 0 && selected.length < SESSION_LENGTH) {
     const weighted = [];
 
-    choices.forEach(country => {
+    remaining.forEach(country => {
       const level = progress[country.name] || 0;
       const weight = level >= 3 ? 1 : level === 2 ? 2 : 4;
 
-      for (let j = 0; j < weight; j++) {
+      for (let i = 0; i < weight; i++) {
         weighted.push(country);
       }
     });
 
     const chosen = weighted[Math.floor(Math.random() * weighted.length)];
     selected.push(chosen);
+    remaining.splice(remaining.indexOf(chosen), 1);
+  }
+
+  // If there are fewer than 20 countries, start another round.
+  while (selected.length < SESSION_LENGTH) {
+    let choices = pool;
+
+    if (pool.length > 1) {
+      choices = pool.filter(
+        country => country.name !== selected[selected.length - 1].name
+      );
+    }
+
+    const weighted = [];
+
+    choices.forEach(country => {
+      const level = progress[country.name] || 0;
+      const weight = level >= 3 ? 1 : level === 2 ? 2 : 4;
+
+      for (let i = 0; i < weight; i++) {
+        weighted.push(country);
+      }
+    });
+
+    selected.push(weighted[Math.floor(Math.random() * weighted.length)]);
   }
 
   return selected;
