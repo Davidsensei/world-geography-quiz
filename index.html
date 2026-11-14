@@ -353,120 +353,55 @@ function showQuestion() {
   answerArea.innerHTML = "";
 
   makeAnswers(country).forEach(option => {
-    const button = document.createElement("button");
-    button.className = "answer";
-    button.textContent = option;
-    button.onclick = () => checkAnswer(button, option, country);
-    answerArea.appendChild(button);
-  });
+function makeAnswers(country) {
+  const answers = [country.capital];
 
-  speak(`What is the capital of ${country.name}?`);
-}
+  const sameCountryCities = shuffle(
+    country.cities.filter(city => city !== country.capital)
+  );
 
-function checkAnswer(button, answer, country) {
-  if (button.disabled) return;
+  const otherCapitals = shuffle(
+    countries
+      .filter(c => c.name !== country.name)
+      .map(c => c.capital)
+  );
 
-  const feedback = document.getElementById("feedback");
+  // Randomly choose one of three answer patterns.
+  const pattern = Math.floor(Math.random() * 3);
 
-  if (answer === country.capital) {
-    score++;
+  let localCount;
 
-    if (firstAttempt) {
-      firstTryCorrect++;
-      firstTryCount++;
-    }
-
-    const oldLevel = progress[country.name] || 0;
-    progress[country.name] = Math.min(3, oldLevel + 1);
-
-    localStorage.setItem("geoProgress", JSON.stringify(progress));
-
-    button.classList.add("correct");
-
-    document.querySelectorAll(".answer").forEach(b => {
-      b.disabled = true;
-    });
-
-    feedback.textContent = "✓ Correct! " + country.capital;
-    feedback.style.color = "#15803d";
-
-    speak(`${country.name}. The capital is ${country.capital}.`);
-
-    document.getElementById("score").textContent = score;
-
-    document.getElementById("accuracy").textContent =
-      Math.round(firstTryCorrect / firstTryCount * 100) + "%";
-
-    document.getElementById("nextButton").style.display = "inline-block";
-
+  if (pattern === 0) {
+    localCount = 3; // All from the same country.
+  } else if (pattern === 1) {
+    localCount = 0; // All from other countries.
   } else {
-    if (firstAttempt) {
-      firstTryCount++;
-      firstAttempt = false;
+    localCount = Math.random() < 0.5 ? 1 : 2; // Mixed.
+  }
 
-      if (!practice.includes(country.name)) {
-        practice.push(country.name);
-      }
+  // Add the same-country cities first.
+  answers.push(...sameCountryCities.slice(0, localCount));
+
+  // Fill the remaining spaces with foreign capitals.
+  const remaining = 4 - answers.length;
+
+  for (const capital of otherCapitals) {
+    if (answers.length >= 4) break;
+    if (!answers.includes(capital)) {
+      answers.push(capital);
     }
-
-    button.classList.add("wrong");
-    button.disabled = true;
-
-    feedback.textContent = "✗ Not quite! Try again.";
-    feedback.style.color = "#dc2626";
-
-    speak("Try again.");
   }
+
+  // If necessary, fill any remaining spaces with local cities.
+  for (const city of sameCountryCities) {
+    if (answers.length >= 4) break;
+    if (!answers.includes(city)) {
+      answers.push(city);
+    }
+  }
+
+  return shuffle(answers);
 }
-
-document.getElementById("nextButton").onclick = () => {
-  current++;
-
-  if (current >= questions.length) {
-    finishQuiz();
-  } else {
-    showQuestion();
-  }
-};
-
-function finishQuiz() {
-  document.getElementById("quizPanel").style.display = "none";
-  document.getElementById("summary").style.display = "block";
-
-  document.getElementById("finalScore").textContent =
-    `You got ${score} out of ${questions.length} questions correct.`;
-
-  document.getElementById("finalAccuracy").textContent =
-    `First-attempt accuracy: ${
-      firstTryCount
-        ? Math.round(firstTryCorrect / firstTryCount * 100)
-        : 0
-    }%`;
-
-  document.getElementById("practiceList").textContent =
-    practice.length
-      ? practice.join(", ")
-      : "Excellent work — all correct on the first attempt!";
-}
-
-// Restart the quiz whenever a selection changes.
-
-document.getElementById("continent").addEventListener("change", startQuiz);
-
-document.getElementById("speakButton").onclick = () => {
-  speak(`What is the capital of ${questions[current].name}?`);
-};
-
-document.getElementById("soundButton").onclick = () => {
-  soundOn = !soundOn;
-
-  document.getElementById("soundButton").textContent =
-    soundOn ? "🔈 Sound: On" : "🔇 Sound: Off";
-
-  if (!soundOn && "speechSynthesis" in window) {
-    speechSynthesis.cancel();
-  }
-};
 
 startQuiz();
 </script>
