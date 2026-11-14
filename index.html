@@ -424,20 +424,28 @@ function speak(text) {
   const message = new SpeechSynthesisUtterance(text);
   const voices = speechSynthesis.getVoices();
 
-  const britishFemale = voices.find(voice =>
-    voice.lang === "en-GB" &&
-    /female|serena|kate|susan|libby/i.test(voice.name)
-  );
-
-  message.voice = britishFemale ||
+  const selectedVoice =
+    voices.find(voice =>
+      voice.lang === "en-GB" &&
+      /female|serena|kate|susan|libby/i.test(voice.name)
+    ) ||
     voices.find(voice => voice.lang === "en-GB") ||
-    null;
+    voices.find(voice => voice.lang === "en-US") ||
+    voices[0];
 
-  message.lang = "en-GB";
+  // Only assign a voice if one actually exists.
+  if (selectedVoice) {
+    message.voice = selectedVoice;
+    message.lang = selectedVoice.lang;
+  } else {
+    message.lang = "en-US";
+  }
+
   message.rate = 0.9;
 
   speechSynthesis.speak(message);
 }
+  
 function shuffle(array) {
   const result = [...array];
 
