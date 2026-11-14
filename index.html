@@ -400,7 +400,133 @@ function showQuestion() {
 
   speak(`What is the capital of ${country.name}?`);
 }
+function checkAnswer(button, answer, country) {
+  const correct = answer === country.capital;
 
+  // Record the first attempt only.
+  if (firstAttempt) {
+    firstTryCount++;
+
+    if (correct) {
+      firstTryCorrect++;
+
+      // Improve this country's progress.
+      progress[country.name] = Math.min(
+        3,
+        (progress[country.name] || 0) + 1
+      );
+    } else {
+      // Remember this country for extra practice.
+      if (!practice.includes(country.name)) {
+        practice.push(country.name);
+      }
+
+      // Reduce progress when an answer is incorrect.
+      progress[country.name] = Math.max(
+        0,
+        (progress[country.name] || 0) - 1
+      );
+    }
+
+    firstAttempt = false;
+
+    localStorage.setItem("geoProgress", JSON.stringify(progress));
+  }
+
+  if (correct) {
+    button.classList.add("correct");
+    score++;
+
+    document.getElementById("score").textContent = score;
+    document.getElementById("feedback").textContent =
+      `Correct! ${country.capital} is the capital of ${country.name}.`;
+
+    document.querySelectorAll(".answer").forEach(btn => {
+      btn.disabled = true;
+    });
+
+    document.getElementById("nextButton").style.display = "inline-block";
+
+    speak(`Correct! The capital of ${country.name} is ${country.capital}.`);
+
+  } else {
+    button.classList.add("wrong");
+    button.disabled = true;
+
+    document.getElementById("feedback").textContent =
+      `Not quite! The correct answer is ${country.capital}. Try again!`;
+
+    speak(`Not quite. The answer is ${country.capital}. Try again.`);
+  }
+
+  document.getElementById("accuracy").textContent =
+    Math.round(firstTryCorrect / firstTryCount * 100) + "%";
+}
+
+function nextQuestion() {
+  current++;
+
+  if (current >= questions.length) {
+    endQuiz();
+  } else {
+    showQuestion();
+  }
+}
+
+function endQuiz() {
+  document.getElementById("quizPanel").style.display = "none";
+  document.getElementById("summary").style.display = "block";
+
+  document.getElementById("finalScore").textContent =
+    `Your score: ${score}/${questions.length}`;
+
+  document.getElementById("finalAccuracy").textContent =
+    `First-attempt accuracy: ${
+      Math.round(firstTryCorrect / firstTryCount * 100)
+    }%`;
+
+  document.getElementById("practiceList").textContent =
+    practice.length > 0
+      ? practice.join(", ")
+      : "Excellent! No countries to practise.";
+
+  document.getElementById("progressBar").style.width = "100%";
+
+  speak("Quiz complete! Well done!");
+}
+
+// Connect the buttons.
+document.getElementById("nextButton").addEventListener(
+  "click",
+  nextQuestion
+);
+
+document.getElementById("speakButton").addEventListener(
+  "click",
+  () => {
+    const country = questions[current];
+    speak(`What is the capital of ${country.name}?`);
+  }
+);
+
+document.getElementById("soundButton").addEventListener(
+  "click",
+  () => {
+    soundOn = !soundOn;
+
+    document.getElementById("soundButton").textContent =
+      soundOn ? "🔈 Sound: On" : "🔇 Sound: Off";
+
+    if (!soundOn) {
+      speechSynthesis.cancel();
+    }
+  }
+);
+
+document.getElementById("continent").addEventListener(
+  "change",
+  startQuiz
+);
 startQuiz();
 </script>
 </body>
