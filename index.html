@@ -391,54 +391,14 @@ function showQuestion() {
   answerArea.innerHTML = "";
 
   makeAnswers(country).forEach(option => {
-function makeAnswers(country) {
-  const answers = [country.capital];
+    const button = document.createElement("button");
+    button.className = "answer";
+    button.textContent = option;
+    button.onclick = () => checkAnswer(button, option, country);
+    answerArea.appendChild(button);
+  });
 
-  const sameCountryCities = shuffle(
-    country.cities.filter(city => city !== country.capital)
-  );
-
-  const otherCapitals = shuffle(
-    countries
-      .filter(c => c.name !== country.name)
-      .map(c => c.capital)
-  );
-
-  // Randomly choose one of three answer patterns.
-  const pattern = Math.floor(Math.random() * 3);
-
-  let localCount;
-
-  if (pattern === 0) {
-    localCount = 3; // All from the same country.
-  } else if (pattern === 1) {
-    localCount = 0; // All from other countries.
-  } else {
-    localCount = Math.random() < 0.5 ? 1 : 2; // Mixed.
-  }
-
-  // Add the same-country cities first.
-  answers.push(...sameCountryCities.slice(0, localCount));
-
-  // Fill the remaining spaces with foreign capitals.
-  const remaining = 4 - answers.length;
-
-  for (const capital of otherCapitals) {
-    if (answers.length >= 4) break;
-    if (!answers.includes(capital)) {
-      answers.push(capital);
-    }
-  }
-
-  // If necessary, fill any remaining spaces with local cities.
-  for (const city of sameCountryCities) {
-    if (answers.length >= 4) break;
-    if (!answers.includes(city)) {
-      answers.push(city);
-    }
-  }
-
-  return shuffle(answers);
+  speak(`What is the capital of ${country.name}?`);
 }
 
 startQuiz();
