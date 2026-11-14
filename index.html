@@ -293,24 +293,45 @@ function chooseQuestions(pool) {
 function makeAnswers(country) {
   const answers = [country.capital];
 
-  // Collect cities from the correct country.
-  const sameCountryCities = country.cities.filter(
-    city => city !== country.capital
+  const sameCountryCities = shuffle(
+    country.cities.filter(city => city !== country.capital)
   );
 
-  // Collect capitals from other countries.
-  const otherCapitals = countries
-    .filter(c => c.name !== country.name)
-    .map(c => c.capital);
+  const otherCapitals = shuffle(
+    countries
+      .filter(c => c.name !== country.name)
+      .map(c => c.capital)
+  );
 
-  // Randomly choose three wrong answers.
-  const distractors = [...sameCountryCities, ...otherCapitals];
+  // Randomly choose one of three answer patterns.
+  const pattern = Math.floor(Math.random() * 3);
 
-  shuffle(distractors);
+  let localCount;
 
-  for (const answer of distractors) {
-    if (!answers.includes(answer) && answers.length < 4) {
-      answers.push(answer);
+  if (pattern === 0) {
+    localCount = 3;
+  } else if (pattern === 1) {
+    localCount = 0;
+  } else {
+    localCount = Math.random() < 0.5 ? 1 : 2;
+  }
+
+  // Add cities from the correct country.
+  answers.push(...sameCountryCities.slice(0, localCount));
+
+  // Fill the remaining spaces with capitals from other countries.
+  for (const capital of otherCapitals) {
+    if (answers.length >= 4) break;
+    if (!answers.includes(capital)) {
+      answers.push(capital);
+    }
+  }
+
+  // Fill any remaining spaces if needed.
+  for (const city of sameCountryCities) {
+    if (answers.length >= 4) break;
+    if (!answers.includes(city)) {
+      answers.push(city);
     }
   }
 
