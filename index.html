@@ -92,6 +92,18 @@ button {
 .answer.correct { background: #dcfce7; border-color: #16a34a; color: #166534; }
 .answer.wrong { background: #fee2e2; border-color: #dc2626; color: #991b1b; }
 #feedback {
+  .capital-fact {
+  display: none;
+  background: #eff6ff;
+  border-left: 4px solid #3975b9;
+  border-radius: 8px;
+  padding: 14px;
+  margin: 12px 0;
+  color: #1e40af;
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: left;
+}
   min-height: 30px;
   text-align: center;
   font-weight: bold;
@@ -165,6 +177,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
     <div class="answers" id="answers"></div>
 
     <div id="feedback"></div>
+<div id="capitalFact" class="capital-fact"></div>
 
     <div class="controls">
       <button class="secondary" id="speakButton">🔊 Hear question</button>
@@ -385,7 +398,12 @@ const countries = [
 {name:"Tuvalu",capital:"Funafuti",continent:"Oceania",cities:["Savave","Tanrake","Asau","Vaiaku"]},
 {name:"Vanuatu",capital:"Port Vila",continent:"Oceania",cities:["Luganville","Isangel","Sola","Lakatoro"]},
   ];
-
+const capitalFacts = {
+  "Bolivia": "Did you know? Sucre is Bolivia's constitutional capital, but La Paz is the seat of government.",
+  "South Africa": "Interesting fact! South Africa has three capitals: Pretoria (executive), Cape Town (legislative) and Bloemfontein (judicial).",
+  "Malaysia": "Did you know? Kuala Lumpur is the national capital, while Putrajaya is the federal administrative centre.",
+  "Sri Lanka": "Interesting fact! Sri Jayawardenepura Kotte is the official legislative capital and home to Parliament."
+};
 const SESSION_LENGTH = 20;
 let questions = [];
 let current = 0;
@@ -562,7 +580,9 @@ function showQuestion() {
     `What is the capital of ${country.name}?`;
 
   document.getElementById("feedback").textContent = "";
-  document.getElementById("nextButton").style.display = "none";
+document.getElementById("capitalFact").style.display = "none";
+document.getElementById("capitalFact").textContent = "";
+document.getElementById("nextButton").style.display = "none";
 
   const answerArea = document.getElementById("answers");
   answerArea.innerHTML = "";
@@ -617,6 +637,14 @@ function checkAnswer(button, answer, country) {
     document.getElementById("score").textContent = score;
     document.getElementById("feedback").textContent =
       `Correct! ${country.capital} is the capital of ${country.name}.`;
+    // Display an interesting capital fact, if one exists.
+const fact = capitalFacts[country.name];
+
+if (fact) {
+  const factBox = document.getElementById("capitalFact");
+  factBox.textContent = "🌍 " + fact;
+  factBox.style.display = "block";
+}
 
     document.querySelectorAll(".answer").forEach(btn => {
       btn.disabled = true;
